@@ -1,3 +1,5 @@
+// version 1.1
+
 import processing.serial.*;
 // this version of the canvas is meant to be embeded in a larger window to accomidate additional tools.
 // also this version won't move backward, moving backward (on my bot at least) is less accurate
@@ -265,5 +267,25 @@ class EggbotCanvas {
       drawRect(x+(i), y+(i), w-(2*i), h-(2*i), true);
     } 
     penUp(true);
+  }
+  
+  void setPenMin(int n){
+    // this is pen up
+    n=65535/2*n/100;
+    String command="SC,4,"+n+"\n";
+    println (command);
+    controller.write(command);
+  }
+  
+  void setPenMax(int n){
+    // this is pen down
+    n=65535/2*n/100;
+    String command="SC,5,"+n+"\n";
+    println (command);
+    controller.write(command);
+  }
+  
+  void releaseMotors(){
+    controller.write("EM,0,0\n");
   }
 }
