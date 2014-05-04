@@ -1,5 +1,8 @@
-import processing.serial.*;
+// version 1.1
 
+import processing.serial.*;
+// this version of the canvas is meant to be embeded in a larger window to accomidate additional tools.
+// also this version won't move backward, moving backward (on my bot at least) is less accurate
 
 class EggbotCanvas {
   PApplet parent;
@@ -24,10 +27,10 @@ class EggbotCanvas {
     // println("------EggbotCanvas------");
     parent = p;
     isConnected = drawOnEgg; 
-    size(stageWidth+1, stageHeight+1);
+    drawBackground();
    
     if (drawOnEgg){
-      // TODO: find and open the serial port
+      // find and open the serial port
       String[] ports = Serial.list();
       
       isConnected=false;
@@ -51,6 +54,14 @@ class EggbotCanvas {
     }
   }
   
+  public void drawBackground(){
+    // make the canvas white
+    color c = color(255, 255, 255);  // Define color 'c'
+    fill(c);  // Use color variable 'c' as fill color
+    noStroke();  // Don't draw a stroke around shapes
+    rect(0, 0, stageWidth+1, stageHeight+1);  // Draw rectangle
+  }
+    
   void test(){
     // println("------test------");
     // draw square to test stage dimensions
@@ -105,16 +116,22 @@ class EggbotCanvas {
       line(penX/4, penY/4, x/4, y/4); //virtual canvas is quarter resolution
     } else {
       //println("moving x:"+x+" y:"+y);
-      //visualCanvas.graphics.moveTo(x/4, y/4); //virtual canvas is quarter resolution
     }
     
     int deltaX = x - penX;
     int deltaY = penY - y;
-    long duration = 9*Math.round(Math.pow(Math.max(Math.abs(deltaX), Math.abs(deltaY)),.66));
-      
-    String command = "SM,"+duration+","+deltaY+","+deltaX+"\n";
     
+    while (deltaX<0 && isPenUp) {
+      // moving backward it causes calibration to go off
+      deltaX=deltaX+3200;
+    }
+      
+    long duration = 9*Math.round(Math.pow(Math.max(Math.abs(deltaX), Math.abs(deltaY)),.66));    
+    String command = "SM,"+duration+","+deltaY+","+deltaX+"\n";
     if (isConnected) controller.write(command);
+    
+    
+    
     // For the eggbott, move pen actually moves the servo motors that spin the egg(x) or move the arm holding the pen (y)
     /*
     http://www.schmalzhaus.com/EBB/EBBCommands.html
@@ -124,6 +141,7 @@ class EggbotCanvas {
     If both <axis1> and <axis2> are zero, then a delay of <duration> ms is executed. <axis2> is an optional value, and if it is not included 
     in the command, zero steps are assumed for axis 2.
     */
+    
     
     penX=x;
     penY=y;
@@ -249,5 +267,25 @@ class EggbotCanvas {
       drawRect(x+(i), y+(i), w-(2*i), h-(2*i), true);
     } 
     penUp(true);
+  }
+  
+  void setPenMin(int n){
+    // this is pen up
+    n=65535/2*n/100;
+    String command="SC,4,"+n+"\n";
+    println (command);
+    controller.write(command);
+  }
+  
+  void setPenMax(int n){
+    // this is pen down
+    n=65535/2*n/100;
+    String command="SC,5,"+n+"\n";
+    println (command);
+    controller.write(command);
+  }
+  
+  void releaseMotors(){
+    controller.write("EM,0,0\n");
   }
 }
